@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1000" width="800" height="1000">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#211d2a"/>
+      <stop offset="100%" stop-color="#0b0a0f"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="1000" fill="url(#g)"/>
+  <g stroke="#c9a24a" stroke-width="3" fill="none" opacity="0.85">
+    <path d="M320 330 l-90 60 30 70 60-30 v340 h160 v-340 l60 30 30-70 -90-60 a60 60 0 0 1 -160 0 z"/>
+  </g>
+  <text x="400" y="800" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="34" fill="#c9a24a" letter-spacing="4">HIBRANSO</text>
+  <text x="400" y="850" text-anchor="middle" font-family="Arial, sans-serif" font-size="20" fill="#8a8178" letter-spacing="2">DEMO PRODUCT IMAGE — CLOTHING</text>
+</svg>
