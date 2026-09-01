@@ -1,11 +1,11 @@
 import Link from "next/link";
-import { getCategories } from "@/lib/products";
+import { getTopLevelCategories } from "@/lib/products";
 import { Container } from "@/components/ui/Container";
 import { Logo } from "./Logo";
 import { buildGeneralWhatsAppLink } from "@/lib/whatsapp";
 
 export async function Footer() {
-  const categories = await getCategories();
+  const categories = await getTopLevelCategories();
   const year = new Date().getFullYear();
 
   return (

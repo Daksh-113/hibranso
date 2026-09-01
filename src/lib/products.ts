@@ -1,7 +1,7 @@
 import "server-only";
 
 import { createPublicClient } from "@/lib/supabase/public";
-import type { Category, Product, ShopSearchParams } from "@/lib/types";
+import type { Category, CategoryWithChildren, Product, ShopSearchParams } from "@/lib/types";
 
 const PRODUCT_SELECT = `
   *,
@@ -56,6 +56,86 @@ export async function getCategoryBySlug(slug: string): Promise<Category | null> 
   } catch (error) {
     console.error("getCategoryBySlug failed:", error);
     return null;
+  }
+}
+
+export async function getTopLevelCategories(): Promise<Category[]> {
+  try {
+    const supabase = createPublicClient();
+    const { data, error } = await supabase
+      .from("categories")
+      .select("*")
+      .is("parent_id", null)
+      .order("display_order", { ascending: true });
+
+    if (error) throw error;
+    return data ?? [];
+  } catch (error) {
+    console.error("getTopLevelCategories failed:", error);
+    return [];
+  }
+}
+
+export async function getCategoryTree(): Promise<CategoryWithChildren[]> {
+  const categories = await getCategories();
+  const topLevel = categories.filter((category) => !category.parent_id);
+
+  return topLevel.map((category) => ({
+    ...category,
+    children: categories
+      .filter((child) => child.parent_id === category.id)
+      .sort((a, b) => a.display_order - b.display_order),
+  }));
+}
+
+/** A category's id plus any direct subcategory ids, resolved by slug — used to
+ * make a parent category page show products from all of its subcategories too. */
+async function resolveCategoryAndDescendantIds(
+  supabase: ReturnType<typeof createPublicClient>,
+  slug: string
+): Promise<string[]> {
+  const { data: category } = await supabase
+    .from("categories")
+    .select("id")
+    .eq("slug", slug)
+    .maybeSingle();
+
+  if (!category) return [];
+
+  const { data: children } = await supabase
+    .from("categories")
+    .select("id")
+    .eq("parent_id", category.id);
+
+  return [category.id, ...((children ?? []).map((child) => child.id))];
+}
+
+export async function getCategoryById(id: string): Promise<Category | null> {
+  try {
+    const supabase = createPublicClient();
+    const { data, error } = await supabase.from("categories").select("*").eq("id", id).maybeSingle();
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error("getCategoryById failed:", error);
+    return null;
+  }
+}
+
+export async function getSubcategories(parentId: string): Promise<Category[]> {
+  try {
+    const supabase = createPublicClient();
+    const { data, error } = await supabase
+      .from("categories")
+      .select("*")
+      .eq("parent_id", parentId)
+      .order("display_order", { ascending: true });
+
+    if (error) throw error;
+    return data ?? [];
+  } catch (error) {
+    console.error("getSubcategories failed:", error);
+    return [];
   }
 }
 
@@ -126,13 +206,9 @@ export async function getProducts(params: ShopSearchParams = {}): Promise<Produc
     }
 
     if (params.category) {
-      const { data: category } = await supabase
-        .from("categories")
-        .select("id")
-        .eq("slug", params.category)
-        .maybeSingle();
-      if (category) {
-        query = query.eq("category_id", category.id);
+      const categoryIds = await resolveCategoryAndDescendantIds(supabase, params.category);
+      if (categoryIds.length > 0) {
+        query = query.in("category_id", categoryIds);
       } else {
         return [];
       }
@@ -267,14 +343,20 @@ export type CategoryWithPreview = Category & { previewImage: string | null; prod
 export async function getCategoriesWithPreview(): Promise<CategoryWithPreview[]> {
   try {
     const supabase = createPublicClient();
-    const categories = await getCategories();
+    const allCategories = await getCategories();
+    const categories = await getTopLevelCategories();
 
     const withPreview = await Promise.all(
       categories.map(async (category) => {
+        const categoryIds = [
+          category.id,
+          ...allCategories.filter((c) => c.parent_id === category.id).map((c) => c.id),
+        ];
+
         const { data: products, count } = await supabase
           .from("products")
           .select("product_images(image_url, display_order)", { count: "exact" })
-          .eq("category_id", category.id)
+          .in("category_id", categoryIds)
           .order("created_at", { ascending: false })
           .limit(1);
 

@@ -96,14 +96,18 @@ in a trusted server context if you add one later, and never with a
    It automatically promotes whichever Supabase Auth user(s) already exist at
    the time you run it (i.e. the admin account you created) to admin status,
    so nothing breaks.
+5. Paste and run [`supabase/migration_003_subcategories.sql`](./supabase/migration_003_subcategories.sql).
+   This adds an optional `parent_id` to categories so you can nest them one
+   level deep (e.g. Bags → Totes, Bags → Slings) from `/admin/categories`.
 
-You can re-run `schema.sql` and `migration_002_accounts.sql` safely — both
-use `if not exists` / `drop policy if exists` guards. `seed.sql` is not
-idempotent; running it twice will create duplicate demo products (their
-slugs will conflict and the insert will fail for those rows only).
+You can re-run `schema.sql`, `migration_002_accounts.sql`, and
+`migration_003_subcategories.sql` safely — all three use `if not exists` /
+`drop policy if exists` guards. `seed.sql` is not idempotent; running it
+twice will create duplicate demo products (their slugs will conflict and
+the insert will fail for those rows only).
 
-The admin can create additional categories at any time from
-`/admin/categories` — you are not limited to Bags/Clothing/Other.
+The admin can create additional categories (and subcategories) at any time
+from `/admin/categories` — you are not limited to Bags/Clothing/Other.
 
 ---
 

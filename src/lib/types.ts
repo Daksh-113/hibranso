@@ -4,9 +4,12 @@ export type Category = {
   slug: string;
   description: string | null;
   display_order: number;
+  parent_id: string | null;
   created_at: string;
   updated_at: string;
 };
+
+export type CategoryWithChildren = Category & { children: Category[] };
 
 export type ProductImage = {
   id: string;

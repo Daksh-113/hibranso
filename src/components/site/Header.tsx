@@ -1,12 +1,12 @@
 import Link from "next/link";
-import { getCategories } from "@/lib/products";
+import { getCategoryTree } from "@/lib/products";
 import { getCurrentCustomer, getWishlistProductIds } from "@/lib/customer";
 import { Logo } from "./Logo";
 import { MobileNav } from "./MobileNav";
 import { Container } from "@/components/ui/Container";
 
 export async function Header() {
-  const [categories, customer] = await Promise.all([getCategories(), getCurrentCustomer()]);
+  const [categories, customer] = await Promise.all([getCategoryTree(), getCurrentCustomer()]);
   const wishlistCount = customer ? (await getWishlistProductIds(customer.id)).size : 0;
   const accountHref = customer ? "/account" : "/account/login";
 
@@ -28,15 +28,40 @@ export async function Header() {
           >
             Shop
           </Link>
-          {categories.map((category) => (
-            <Link
-              key={category.id}
-              href={`/category/${category.slug}`}
-              className="font-serif-display text-sm uppercase tracking-[0.12em] text-charcoal/80 transition-colors hover:text-gold"
-            >
-              {category.name}
-            </Link>
-          ))}
+          {categories.map((category) =>
+            category.children.length > 0 ? (
+              <div key={category.id} className="group relative">
+                <Link
+                  href={`/category/${category.slug}`}
+                  className="flex items-center gap-1 font-serif-display text-sm uppercase tracking-[0.12em] text-charcoal/80 transition-colors hover:text-gold"
+                >
+                  {category.name}
+                  <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 9l6 6 6-6" />
+                  </svg>
+                </Link>
+                <div className="invisible absolute left-0 top-full min-w-[180px] border border-line bg-ivory py-2 opacity-0 shadow-md transition-opacity duration-200 group-hover:visible group-hover:opacity-100">
+                  {category.children.map((child) => (
+                    <Link
+                      key={child.id}
+                      href={`/category/${child.slug}`}
+                      className="block px-4 py-2 text-sm text-charcoal/80 hover:bg-cream hover:text-gold"
+                    >
+                      {child.name}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <Link
+                key={category.id}
+                href={`/category/${category.slug}`}
+                className="font-serif-display text-sm uppercase tracking-[0.12em] text-charcoal/80 transition-colors hover:text-gold"
+              >
+                {category.name}
+              </Link>
+            )
+          )}
           <Link
             href="/about"
             className="font-serif-display text-sm uppercase tracking-[0.12em] text-charcoal/80 transition-colors hover:text-gold"

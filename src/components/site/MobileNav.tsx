@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { clsx } from "clsx";
-import type { Category } from "@/lib/types";
+import type { CategoryWithChildren } from "@/lib/types";
 import { buildGeneralWhatsAppLink } from "@/lib/whatsapp";
 
 const staticLinks = [
@@ -18,7 +18,7 @@ export function MobileNav({
   accountHref,
   wishlistCount,
 }: {
-  categories: Category[];
+  categories: CategoryWithChildren[];
   accountHref: string;
   wishlistCount: number;
 }) {
@@ -71,18 +71,33 @@ export function MobileNav({
           ))}
 
           {categories.length > 0 && (
-            <div className="mt-4 flex flex-col items-center gap-4 border-t border-line pt-8">
+            <div className="mt-4 flex max-h-[35vh] flex-col items-center gap-5 overflow-y-auto border-t border-line pt-8">
               <span className="text-xs uppercase tracking-wider text-stone">Categories</span>
-              <div className="flex flex-wrap justify-center gap-x-6 gap-y-3">
+              <div className="flex flex-col items-center gap-4">
                 {categories.map((category) => (
-                  <Link
-                    key={category.id}
-                    href={`/category/${category.slug}`}
-                    onClick={() => setOpen(false)}
-                    className="text-sm uppercase tracking-wide text-charcoal/80"
-                  >
-                    {category.name}
-                  </Link>
+                  <div key={category.id} className="flex flex-col items-center gap-2">
+                    <Link
+                      href={`/category/${category.slug}`}
+                      onClick={() => setOpen(false)}
+                      className="text-sm uppercase tracking-wide text-charcoal"
+                    >
+                      {category.name}
+                    </Link>
+                    {category.children.length > 0 && (
+                      <div className="flex flex-wrap justify-center gap-x-4 gap-y-1">
+                        {category.children.map((child) => (
+                          <Link
+                            key={child.id}
+                            href={`/category/${child.slug}`}
+                            onClick={() => setOpen(false)}
+                            className="text-xs uppercase tracking-wide text-stone"
+                          >
+                            {child.name}
+                          </Link>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 ))}
               </div>
             </div>

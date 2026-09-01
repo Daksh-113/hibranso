@@ -15,6 +15,19 @@ export function CategoriesManager({ categories }: { categories: Category[] }) {
     router.refresh();
   }
 
+  const topLevel = categories
+    .filter((c) => !c.parent_id)
+    .sort((a, b) => a.display_order - b.display_order);
+  const childrenOf = (parentId: string) =>
+    categories
+      .filter((c) => c.parent_id === parentId)
+      .sort((a, b) => a.display_order - b.display_order);
+
+  const rows = topLevel.flatMap((parent) => [
+    { category: parent, isChild: false },
+    ...childrenOf(parent.id).map((child) => ({ category: child, isChild: true })),
+  ]);
+
   return (
     <div className="space-y-10">
       <div className="overflow-x-auto border border-line">
@@ -28,9 +41,12 @@ export function CategoriesManager({ categories }: { categories: Category[] }) {
             </tr>
           </thead>
           <tbody>
-            {categories.map((category) => (
+            {rows.map(({ category, isChild }) => (
               <tr key={category.id} className="border-b border-line last:border-0">
-                <td className="px-4 py-3 font-medium text-charcoal">{category.name}</td>
+                <td className="px-4 py-3 font-medium text-charcoal">
+                  {isChild && <span className="mr-2 text-stone-light">↳</span>}
+                  {category.name}
+                </td>
                 <td className="px-4 py-3 text-stone">{category.slug}</td>
                 <td className="px-4 py-3 text-stone">{category.display_order}</td>
                 <td className="px-4 py-3">
@@ -43,9 +59,10 @@ export function CategoriesManager({ categories }: { categories: Category[] }) {
                     </button>
                     <button
                       onClick={async () => {
-                        if (!confirm(`Delete "${category.name}"? Products in this category will be unassigned.`)) {
-                          return;
-                        }
+                        const warning = isChild
+                          ? `Delete "${category.name}"? Products in it will be unassigned.`
+                          : `Delete "${category.name}"? Its products will be unassigned, and any subcategories will become top-level categories.`;
+                        if (!confirm(warning)) return;
                         const formData = new FormData();
                         formData.set("id", category.id);
                         await deleteCategoryAction(formData);
@@ -59,7 +76,7 @@ export function CategoriesManager({ categories }: { categories: Category[] }) {
                 </td>
               </tr>
             ))}
-            {categories.length === 0 && (
+            {rows.length === 0 && (
               <tr>
                 <td colSpan={4} className="px-4 py-8 text-center text-stone">
                   No categories yet.
@@ -77,6 +94,7 @@ export function CategoriesManager({ categories }: { categories: Category[] }) {
         <CategoryForm
           key={editing === "new" || editing === null ? "new" : editing.id}
           category={editing && editing !== "new" ? editing : undefined}
+          allCategories={categories}
           onDone={handleDone}
         />
         {editing && (

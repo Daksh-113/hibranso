@@ -11,11 +11,16 @@ const inputClass =
 
 export function CategoryForm({
   category,
+  allCategories,
   onDone,
 }: {
   category?: Category;
+  allCategories: Category[];
   onDone?: () => void;
 }) {
+  const parentOptions = allCategories.filter(
+    (c) => !c.parent_id && c.id !== category?.id
+  );
   const [state, formAction, pending] = useActionState(saveCategoryAction, initialState);
   const [name, setName] = useState(category?.name ?? "");
   const [slug, setSlug] = useState(category?.slug ?? "");
@@ -64,6 +69,24 @@ export function CategoryForm({
       <div>
         <label className="mb-1.5 block text-xs uppercase tracking-wider text-stone">Description</label>
         <textarea name="description" defaultValue={category?.description ?? ""} rows={2} className={inputClass} />
+      </div>
+
+      <div>
+        <label className="mb-1.5 block text-xs uppercase tracking-wider text-stone">
+          Parent category
+        </label>
+        <select name="parent_id" defaultValue={category?.parent_id ?? ""} className={inputClass}>
+          <option value="">None — top-level category</option>
+          {parentOptions.map((option) => (
+            <option key={option.id} value={option.id}>
+              {option.name}
+            </option>
+          ))}
+        </select>
+        <p className="mt-1 text-xs text-stone-light">
+          Leave as &ldquo;None&rdquo; for a main category shown in the navigation. Pick a parent
+          to make this a subcategory (one level deep).
+        </p>
       </div>
 
       <div>
