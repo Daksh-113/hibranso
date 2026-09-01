@@ -55,6 +55,14 @@ export type Product = {
   product_colors?: ProductColor[];
 };
 
+export type CustomerProfile = {
+  id: string;
+  name: string | null;
+  phone: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
 export type ProductSortOption =
   | "newest"
   | "price_asc"

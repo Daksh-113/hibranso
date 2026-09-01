@@ -8,7 +8,7 @@ export function getWhatsAppNumber(): string {
 
 export function buildProductWhatsAppMessage(
   product: Pick<Product, "name" | "mrp" | "selling_price">,
-  options?: { size?: string | null; color?: string | null }
+  options?: { size?: string | null; color?: string | null; customerName?: string | null }
 ): string {
   const lines = [
     "Hi Hibranso, I am interested in purchasing:",
@@ -19,6 +19,7 @@ export function buildProductWhatsAppMessage(
 
   if (options?.size) lines.push(`Size: ${options.size}`);
   if (options?.color) lines.push(`Colour: ${options.color}`);
+  if (options?.customerName) lines.push(`Name: ${options.customerName}`);
 
   return lines.join("\n");
 }
@@ -31,7 +32,7 @@ export function buildWhatsAppLink(message: string): string {
 
 export function buildProductWhatsAppLink(
   product: Pick<Product, "name" | "mrp" | "selling_price">,
-  options?: { size?: string | null; color?: string | null }
+  options?: { size?: string | null; color?: string | null; customerName?: string | null }
 ): string {
   return buildWhatsAppLink(buildProductWhatsAppMessage(product, options));
 }

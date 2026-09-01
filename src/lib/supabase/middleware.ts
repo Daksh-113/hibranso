@@ -38,13 +38,22 @@ export async function updateSession(request: NextRequest) {
   const isAdminRoute = pathname.startsWith("/admin");
   const isLoginRoute = pathname.startsWith("/admin/login");
 
-  if (isAdminRoute && !isLoginRoute && !user) {
+  // Customers can also be signed in (for wishlists), so being "signed in" is
+  // no longer enough for admin access — only users listed in admin_users are
+  // admins. See supabase/migration_002_accounts.sql.
+  let isAdmin = false;
+  if (user && isAdminRoute) {
+    const { data } = await supabase.from("admin_users").select("id").eq("id", user.id).maybeSingle();
+    isAdmin = Boolean(data);
+  }
+
+  if (isAdminRoute && !isLoginRoute && !isAdmin) {
     const loginUrl = new URL("/admin/login", request.url);
     loginUrl.searchParams.set("next", pathname);
     return NextResponse.redirect(loginUrl);
   }
 
-  if (isLoginRoute && user) {
+  if (isLoginRoute && isAdmin) {
     return NextResponse.redirect(new URL("/admin", request.url));
   }
 

@@ -3,8 +3,19 @@ import Link from "next/link";
 import type { Product } from "@/lib/types";
 import { PriceBlock } from "@/components/product/PriceBlock";
 import { Badge } from "@/components/ui/Badge";
+import { WishlistButton } from "@/components/product/WishlistButton";
 
-export function ProductCard({ product, priority = false }: { product: Product; priority?: boolean }) {
+export function ProductCard({
+  product,
+  priority = false,
+  isWishlisted = false,
+  isLoggedIn = false,
+}: {
+  product: Product;
+  priority?: boolean;
+  isWishlisted?: boolean;
+  isLoggedIn?: boolean;
+}) {
   const images = product.product_images ?? [];
   const primaryImage = images[0];
   const secondaryImage = images[1];
@@ -41,22 +52,22 @@ export function ProductCard({ product, priority = false }: { product: Product; p
         <div className="absolute left-3 top-3 flex flex-col gap-2">
           {product.discount_percentage > 0 && <Badge tone="gold">{product.discount_percentage}% off</Badge>}
           {product.is_bestseller && <Badge tone="charcoal">Bestseller</Badge>}
+          {!product.is_available && <Badge tone="outline" className="bg-ivory">Sold Out</Badge>}
         </div>
 
-        {!product.is_available && (
-          <div className="absolute inset-0 flex items-center justify-center bg-charcoal/50">
-            <Badge tone="outline" className="border-ivory bg-ivory/90 text-charcoal">
-              Sold Out
-            </Badge>
-          </div>
-        )}
+        <WishlistButton
+          productId={product.id}
+          initialWishlisted={isWishlisted}
+          isLoggedIn={isLoggedIn}
+          className="absolute right-3 top-3"
+        />
       </div>
 
       <div className="mt-4 space-y-1">
-        {product.category?.name && (
-          <p className="text-[11px] uppercase tracking-wider text-stone">{product.category.name}</p>
-        )}
-        <h3 className="font-serif-display text-base text-charcoal transition-colors group-hover:text-gold">
+        <p className="text-[11px] uppercase tracking-[0.2em] text-stone">
+          {product.category?.name ?? "Hibranso"}
+        </p>
+        <h3 className="font-serif-display text-base uppercase tracking-wide text-charcoal transition-colors group-hover:text-gold">
           {product.name}
         </h3>
         <PriceBlock

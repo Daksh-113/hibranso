@@ -24,8 +24,13 @@ Built with Next.js (App Router), TypeScript, Tailwind CSS v4 and Supabase
 - **Admin dashboard** at `/admin`: secure login, product CRUD (multiple
   images, sizes, colours, MRP/selling price with auto-calculated discount,
   availability, featured/bestseller flags), category CRUD, search & filter.
+- **Customer accounts & wishlist**: passwordless (magic link) sign-in at
+  `/account/login`; customers can save products to a wishlist and store a
+  name/phone that's pre-filled into future WhatsApp messages. Fully separate
+  from admin access — see section 6a.
 - **Database**: Supabase Postgres schema with Row Level Security — anyone
-  can read the catalogue, only a logged-in admin can write.
+  can read the catalogue, only users in `admin_users` can write to it, and
+  each customer can only see/edit their own profile and wishlist.
 - **SEO**: per-page metadata, Open Graph tags, product JSON-LD,
   `sitemap.xml`, `robots.txt`.
 
@@ -85,11 +90,17 @@ in a trusted server context if you add one later, and never with a
 3. (Optional but recommended for first run) Paste and run
    [`supabase/seed.sql`](./supabase/seed.sql) to add six clearly-labelled
    demo products so you can see the site working end to end.
+4. Paste and run [`supabase/migration_002_accounts.sql`](./supabase/migration_002_accounts.sql).
+   This adds customer accounts and wishlists (see section 6a) and, importantly,
+   **locks down catalogue writes to admins only** — do not skip this step.
+   It automatically promotes whichever Supabase Auth user(s) already exist at
+   the time you run it (i.e. the admin account you created) to admin status,
+   so nothing breaks.
 
-You can re-run `schema.sql` safely — it uses `if not exists` / `drop policy
-if exists` guards. `seed.sql` is not idempotent; running it twice will
-create duplicate demo products (their slugs will conflict and the insert
-will fail for those rows only).
+You can re-run `schema.sql` and `migration_002_accounts.sql` safely — both
+use `if not exists` / `drop policy if exists` guards. `seed.sql` is not
+idempotent; running it twice will create duplicate demo products (their
+slugs will conflict and the insert will fail for those rows only).
 
 The admin can create additional categories at any time from
 `/admin/categories` — you are not limited to Bags/Clothing/Other.
@@ -105,19 +116,62 @@ stored there automatically and served via Supabase's CDN.
 
 ---
 
+## 6a. Customer accounts & wishlist (magic link login)
+
+Customers can create a free account to save products to a personal wishlist
+and store their name/phone so it's pre-filled into future WhatsApp order
+messages. Sign-in uses a **passwordless magic link** — the customer enters
+their email at `/account/login` and gets a one-click login link, no
+password to remember.
+
+This is a completely separate account system from the admin login (see
+section 7) — customer accounts can never access `/admin`, enforced by the
+`admin_users` table from `migration_002_accounts.sql`.
+
+**One-time setup required** for the magic link emails to redirect back to
+your site correctly:
+
+1. Supabase Dashboard → **Authentication → URL Configuration**.
+2. Set **Site URL** to your production URL, e.g. `https://hibranso.com`.
+3. Under **Redirect URLs**, add:
+   - `https://hibranso.com/auth/callback` (your production domain)
+   - `http://localhost:3000/auth/callback` (for local development)
+4. Save.
+
+No SMTP setup is required — Supabase sends the magic link email for you out
+of the box (fine for normal traffic levels; for high volume you can later
+configure your own SMTP provider in the same settings page).
+
+---
+
 ## 7. Create the admin account
 
-There is intentionally **no public sign-up page** anywhere in the app —
-every user in Supabase Auth for this project is treated as an admin. To
-create one:
+There is intentionally **no public sign-up page** for admins — only users
+listed in the `admin_users` table (added by `migration_002_accounts.sql`,
+section 5) can access `/admin`. A regular customer account (section 6a)
+never gets admin access, even if they're logged in.
+
+To create an admin:
 
 1. Supabase Dashboard → **Authentication → Users → Add user**.
 2. Enter an email and password (choose "Auto Confirm User" so it's usable
    immediately).
-3. Go to `/admin/login` on your site and sign in with those credentials.
+3. Run this once in the SQL editor to grant admin access to that user
+   (replace the email):
+   ```sql
+   insert into public.admin_users (id)
+   select id from auth.users where email = 'you@example.com'
+   on conflict (id) do nothing;
+   ```
+   (If you ran `migration_002_accounts.sql` *after* already creating your
+   first admin user, this step was already done for you automatically —
+   only needed for admins added afterwards.)
+4. Go to `/admin/login` on your site and sign in with those credentials.
 
-Repeat to add more admin users. To revoke access, delete the user from the
-Supabase Dashboard.
+Repeat to add more admin users. To revoke access, either delete the user
+from the Supabase Dashboard, or just delete their row from `admin_users`
+(their customer account, if any, keeps working — they just lose admin
+access).
 
 ---
 
@@ -223,11 +277,18 @@ accurate.
 ## 12. Security notes
 
 - Every table has Row Level Security enabled. Public (anon) role can only
-  `SELECT`; `INSERT`/`UPDATE`/`DELETE` require `auth.role() = 'authenticated'`.
+  `SELECT` the catalogue; catalogue `INSERT`/`UPDATE`/`DELETE` require the
+  user to be listed in `admin_users` (not just "any logged-in user" — that
+  changed once customer accounts were added, see `migration_002_accounts.sql`).
+- `customer_profiles` and `wishlists` are scoped per-user (`auth.uid() = id` /
+  `auth.uid() = user_id`), so a customer can never see or edit another
+  customer's data.
 - `/admin/*` (except `/admin/login`) is protected by `src/middleware.ts`,
-  which redirects unauthenticated visitors to the login page. The admin
-  dashboard layout (`src/app/admin/(dashboard)/layout.tsx`) re-checks the
-  session server-side as a second layer of defence.
+  which checks both "is logged in" AND "is in `admin_users`" before letting
+  a request through — a logged-in customer is redirected just like a
+  logged-out visitor. The admin dashboard layout
+  (`src/app/admin/(dashboard)/layout.tsx`) re-checks the same thing
+  server-side as a second layer of defence.
 - No service-role key is used anywhere in this codebase — admin writes rely
   entirely on the logged-in user's own session plus RLS, so there is
   nothing secret to leak to the browser.

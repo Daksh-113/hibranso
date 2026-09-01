@@ -10,10 +10,12 @@ export function ProductPurchasePanel({
   product,
   sizes,
   colors,
+  customerName = null,
 }: {
   product: { name: string; mrp: number; selling_price: number; is_available: boolean };
   sizes: ProductSize[];
   colors: ProductColor[];
+  customerName?: string | null;
 }) {
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
@@ -27,8 +29,9 @@ export function ProductPurchasePanel({
       buildProductWhatsAppLink(product, {
         size: selectedSize,
         color: selectedColor,
+        customerName,
       }),
-    [product, selectedSize, selectedColor]
+    [product, selectedSize, selectedColor, customerName]
   );
 
   return (

@@ -1,5 +1,5 @@
 import { clsx } from "clsx";
-import { formatPrice } from "@/lib/format";
+import { formatPriceDisplay } from "@/lib/format";
 
 export function PriceBlock({
   mrp,
@@ -26,7 +26,7 @@ export function PriceBlock({
           size === "lg" && "text-2xl sm:text-3xl"
         )}
       >
-        {formatPrice(sellingPrice)}
+        {formatPriceDisplay(sellingPrice)}
       </span>
       {hasDiscount && (
         <>
@@ -38,7 +38,7 @@ export function PriceBlock({
               size === "lg" && "text-base"
             )}
           >
-            {formatPrice(mrp)}
+            {formatPriceDisplay(mrp)}
           </span>
           <span
             className={clsx(

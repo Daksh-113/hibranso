@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { getCategories, getProducts, getPriceBounds } from "@/lib/products";
+import { getCurrentCustomer, getWishlistProductIds } from "@/lib/customer";
 import { ShopFilters } from "@/components/shop/ShopFilters";
 import { ProductGrid } from "@/components/shop/ProductGrid";
 import { Container } from "@/components/ui/Container";
@@ -20,11 +21,13 @@ export default async function ShopPage({
 }) {
   const params = await searchParams;
 
-  const [categories, products, priceBounds] = await Promise.all([
+  const [categories, products, priceBounds, customer] = await Promise.all([
     getCategories(),
     getProducts(params),
     getPriceBounds(),
+    getCurrentCustomer(),
   ]);
+  const wishlistIds = customer ? await getWishlistProductIds(customer.id) : undefined;
 
   return (
     <Container className="py-12 sm:py-16">
@@ -42,7 +45,12 @@ export default async function ShopPage({
           <p className="mb-6 text-sm text-stone">
             {products.length} {products.length === 1 ? "product" : "products"}
           </p>
-          <ProductGrid products={products} priorityCount={4} />
+          <ProductGrid
+            products={products}
+            priorityCount={4}
+            wishlistIds={wishlistIds}
+            isLoggedIn={Boolean(customer)}
+          />
         </div>
       </div>
     </Container>

@@ -2,11 +2,13 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getProductBySlug, getAllProductSlugs, getRelatedProducts } from "@/lib/products";
+import { getCurrentCustomer, getWishlistProductIds } from "@/lib/customer";
 import { Container } from "@/components/ui/Container";
 import { Badge } from "@/components/ui/Badge";
 import { ImageGallery } from "@/components/product/ImageGallery";
 import { PriceBlock } from "@/components/product/PriceBlock";
 import { ProductPurchasePanel } from "@/components/product/ProductPurchasePanel";
+import { WishlistButton } from "@/components/product/WishlistButton";
 import { ProductGrid } from "@/components/shop/ProductGrid";
 
 export const revalidate = 30;
@@ -48,7 +50,12 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   const product = await getProductBySlug(slug);
   if (!product) notFound();
 
-  const related = await getRelatedProducts(product.category_id, product.id, 4);
+  const [related, customer] = await Promise.all([
+    getRelatedProducts(product.category_id, product.id, 4),
+    getCurrentCustomer(),
+  ]);
+  const wishlistIds = customer ? await getWishlistProductIds(customer.id) : undefined;
+  const isLoggedIn = Boolean(customer);
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -107,7 +114,15 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
               {product.category.name}
             </Link>
           )}
-          <h1 className="mt-2 font-serif-display text-3xl text-charcoal sm:text-4xl">{product.name}</h1>
+          <div className="flex items-start justify-between gap-4">
+            <h1 className="mt-2 font-serif-display text-3xl text-charcoal sm:text-4xl">{product.name}</h1>
+            <WishlistButton
+              productId={product.id}
+              initialWishlisted={wishlistIds?.has(product.id) ?? false}
+              isLoggedIn={isLoggedIn}
+              className="mt-2 shrink-0 border border-line"
+            />
+          </div>
 
           <div className="mt-4 flex items-center gap-3">
             <PriceBlock
@@ -137,6 +152,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
               product={product}
               sizes={product.product_sizes ?? []}
               colors={product.product_colors ?? []}
+              customerName={customer?.profile?.name ?? null}
             />
           </div>
         </div>
@@ -145,7 +161,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
       {related.length > 0 && (
         <section className="mt-24">
           <h2 className="mb-8 font-serif-display text-2xl text-charcoal sm:text-3xl">You may also like</h2>
-          <ProductGrid products={related} />
+          <ProductGrid products={related} wishlistIds={wishlistIds} isLoggedIn={isLoggedIn} />
         </section>
       )}
     </Container>

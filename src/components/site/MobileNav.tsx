@@ -13,7 +13,15 @@ const staticLinks = [
   { href: "/contact", label: "Contact" },
 ];
 
-export function MobileNav({ categories }: { categories: Category[] }) {
+export function MobileNav({
+  categories,
+  accountHref,
+  wishlistCount,
+}: {
+  categories: Category[];
+  accountHref: string;
+  wishlistCount: number;
+}) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -80,11 +88,20 @@ export function MobileNav({ categories }: { categories: Category[] }) {
             </div>
           )}
 
+          <div className="mt-4 flex items-center gap-6 border-t border-line pt-8">
+            <Link href={accountHref} onClick={() => setOpen(false)} className="text-sm uppercase tracking-wide text-charcoal/80">
+              Wishlist{wishlistCount > 0 ? ` (${wishlistCount})` : ""}
+            </Link>
+            <Link href={accountHref} onClick={() => setOpen(false)} className="text-sm uppercase tracking-wide text-charcoal/80">
+              Account
+            </Link>
+          </div>
+
           <a
             href={buildGeneralWhatsAppLink()}
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#25D366] px-6 py-3 text-sm font-medium text-white"
+            className="mt-2 inline-flex items-center gap-2 rounded-full bg-[#25D366] px-6 py-3 text-sm font-medium text-white"
           >
             Chat on WhatsApp
           </a>

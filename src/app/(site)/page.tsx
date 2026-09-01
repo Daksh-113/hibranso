@@ -9,6 +9,7 @@ import {
   getFeaturedProducts,
   getBestsellerProducts,
 } from "@/lib/products";
+import { getCurrentCustomer, getWishlistProductIds } from "@/lib/customer";
 
 export const revalidate = 60;
 
@@ -20,19 +21,34 @@ export const metadata: Metadata = {
 };
 
 export default async function HomePage() {
-  const [categories, featured, bestsellers] = await Promise.all([
+  const [categories, featured, bestsellers, customer] = await Promise.all([
     getCategoriesWithPreview(),
     getFeaturedProducts(8),
     getBestsellerProducts(8),
+    getCurrentCustomer(),
   ]);
+  const wishlistIds = customer ? await getWishlistProductIds(customer.id) : undefined;
+  const isLoggedIn = Boolean(customer);
 
   return (
     <>
       <Hero />
       <CategoryGrid categories={categories} />
-      <ProductRail eyebrow="Handpicked" title="Featured Products" products={featured} />
+      <ProductRail
+        eyebrow="Handpicked"
+        title="Featured Products"
+        products={featured}
+        wishlistIds={wishlistIds}
+        isLoggedIn={isLoggedIn}
+      />
       <PromoBanner />
-      <ProductRail eyebrow="Customer favourites" title="Best Sellers" products={bestsellers} />
+      <ProductRail
+        eyebrow="Customer favourites"
+        title="Best Sellers"
+        products={bestsellers}
+        wishlistIds={wishlistIds}
+        isLoggedIn={isLoggedIn}
+      />
       <AboutTeaser />
     </>
   );

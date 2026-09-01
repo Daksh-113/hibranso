@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getCategoryBySlug, getProducts, getAllCategorySlugs } from "@/lib/products";
+import { getCurrentCustomer, getWishlistProductIds } from "@/lib/customer";
 import { ProductGrid } from "@/components/shop/ProductGrid";
 import { CategorySortSelect } from "@/components/shop/CategorySortSelect";
 import { Container } from "@/components/ui/Container";
@@ -43,7 +44,11 @@ export default async function CategoryPage({
   const category = await getCategoryBySlug(slug);
   if (!category) notFound();
 
-  const products = await getProducts({ category: slug, sort });
+  const [products, customer] = await Promise.all([
+    getProducts({ category: slug, sort }),
+    getCurrentCustomer(),
+  ]);
+  const wishlistIds = customer ? await getWishlistProductIds(customer.id) : undefined;
 
   return (
     <Container className="py-12 sm:py-16">
@@ -62,7 +67,12 @@ export default async function CategoryPage({
         <CategorySortSelect />
       </div>
 
-      <ProductGrid products={products} priorityCount={4} />
+      <ProductGrid
+        products={products}
+        priorityCount={4}
+        wishlistIds={wishlistIds}
+        isLoggedIn={Boolean(customer)}
+      />
     </Container>
   );
 }
