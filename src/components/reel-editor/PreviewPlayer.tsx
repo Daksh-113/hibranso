@@ -41,7 +41,7 @@ export function PreviewPlayer({ segments, clips, audioFile }: PreviewPlayerProps
     if (audioRef.current) audioRef.current.currentTime = 0;
   }, [segments]);
 
-  function syncVideoToTime(time: number) {
+  function syncVideoToTime(time: number, shouldBePlaying: boolean) {
     const video = videoRef.current;
     if (!video || segments.length === 0) return;
 
@@ -56,9 +56,15 @@ export function PreviewPlayer({ segments, clips, audioFile }: PreviewPlayerProps
       lastClipIdRef.current = clip.id + segment.id;
       video.src = clip.url;
       video.currentTime = expectedVideoTime;
-      if (playing) void video.play().catch(() => {});
     } else if (Math.abs(video.currentTime - expectedVideoTime) > DRIFT_TOLERANCE) {
       video.currentTime = expectedVideoTime;
+    }
+
+    // Seeking (above) or the browser buffering can silently abort/pause the
+    // video's own playback even though we still want it playing — re-issue
+    // play() whenever that happens instead of leaving the frame frozen.
+    if (shouldBePlaying && video.paused) {
+      void video.play().catch(() => {});
     }
   }
 
@@ -71,7 +77,7 @@ export function PreviewPlayer({ segments, clips, audioFile }: PreviewPlayerProps
       const audio = audioRef.current;
       if (audio) {
         setCurrentTime(audio.currentTime);
-        syncVideoToTime(audio.currentTime);
+        syncVideoToTime(audio.currentTime, true);
       }
       rafRef.current = requestAnimationFrame(tick);
     };
@@ -91,9 +97,8 @@ export function PreviewPlayer({ segments, clips, audioFile }: PreviewPlayerProps
       video?.pause();
       setPlaying(false);
     } else {
-      syncVideoToTime(audio.currentTime);
       void audio.play();
-      void video?.play().catch(() => {});
+      syncVideoToTime(audio.currentTime, true);
       setPlaying(true);
     }
   }
@@ -103,7 +108,7 @@ export function PreviewPlayer({ segments, clips, audioFile }: PreviewPlayerProps
     if (!audio) return;
     audio.currentTime = time;
     setCurrentTime(time);
-    syncVideoToTime(time);
+    syncVideoToTime(time, playing);
   }
 
   function handleEnded() {
