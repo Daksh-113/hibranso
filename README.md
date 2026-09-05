@@ -228,6 +228,8 @@ src/
       login/            Admin login (no sidebar)
       (dashboard)/       Overview, Products (list/new/edit), Categories
                           — protected: requires a logged-in Supabase user
+    reel-editor/        Standalone audio-driven clip editor (see section 14)
+                          — unauthenticated, not indexed, no Supabase dependency
     sitemap.ts, robots.ts
   components/
     site/               Header, MobileNav, Footer, Logo, WhatsApp floating button
@@ -316,3 +318,39 @@ you need to:
 6. Log into `/admin`, delete the `[DEMO]` products, and add real Hibranso
    products, images, categories, sizes and colours.
 7. Deploy to Vercel — see section 9.
+
+---
+
+## 14. Reel Editor (`/reel-editor`)
+
+A standalone, audio-driven clip editor for cutting Instagram/social reels —
+unrelated to the product catalogue, has no Supabase dependency, and isn't
+linked from site navigation or indexed by search engines.
+
+Workflow:
+
+1. **Upload audio** — the track for your reel. Beats are detected client-side
+   with the Web Audio API (energy-based onset detection with an
+   adaptive-sensitivity threshold, falling back to fixed-interval markers if
+   too few onsets are found). A "cut density" control (every beat / every 2nd
+   / 4th / 8th) determines how many of the detected beats become cuts.
+2. **Upload video clips** — your raw footage, in any order; reorder or remove
+   them with the controls on each thumbnail.
+3. **Timeline** — auto-arranged by slicing the audio at each active beat and
+   assigning clips to the slots in rotation (each clip continues from where
+   it last left off, looping back to its start if it runs out of footage).
+   Reassign the clip used for any cut, remove a cut (merging it into the
+   previous one), or hit "Auto-arrange from beats" to regenerate from
+   scratch.
+4. **Preview** — synced playback using the audio element as the master clock,
+   swapping/seeking the preview `<video>` to match the active segment.
+5. **Export** — renders entirely in the browser with
+   [`ffmpeg.wasm`](https://ffmpegwasm.netlify.app/) (nothing is uploaded to a
+   server): each segment is trimmed and scaled to the chosen aspect ratio
+   (Reel 9:16, Square 1:1, or Landscape 16:9), concatenated, and muxed with
+   the audio track into a downloadable `.mp4`.
+
+No configuration or environment variables are needed for this tool — it works
+the moment the app is deployed. Rendering is CPU-bound and single-threaded
+(no `SharedArrayBuffer`/COOP-COEP headers required), so longer reels take
+longer to export; keep the tab open until it finishes.
