@@ -2,9 +2,38 @@ import "server-only";
 
 const DELHIVERY_BASE_URL = "https://track.delhivery.com";
 
+/**
+ * Flat delivery fee (in rupees) used whenever Delhivery isn't configured —
+ * e.g. the business account hasn't been activated yet. Override with the
+ * FLAT_DELIVERY_FEE env var. The moment DELHIVERY_API_TOKEN and
+ * DELHIVERY_ORIGIN_PINCODE are both set, live Delhivery rates take over
+ * automatically — no code change needed to switch back.
+ */
+const FLAT_DELIVERY_FEE = Number(process.env.FLAT_DELIVERY_FEE ?? 149);
+
 export type DeliveryRateResult =
   | { ok: true; charge: number }
   | { ok: false; error: string };
+
+/**
+ * Resolves the delivery charge for a shipment: uses live Delhivery rates if
+ * configured, otherwise falls back to the flat fee above. This is what
+ * checkout should call — not `calculateDeliveryCharge` directly — so the
+ * fallback always applies consistently.
+ */
+export async function resolveDeliveryCharge(
+  destinationPincode: string,
+  totalWeightGrams: number
+): Promise<DeliveryRateResult> {
+  if (!process.env.DELHIVERY_API_TOKEN || !process.env.DELHIVERY_ORIGIN_PINCODE) {
+    if (!/^\d{6}$/.test(destinationPincode)) {
+      return { ok: false, error: "Please enter a valid 6-digit pincode." };
+    }
+    return { ok: true, charge: FLAT_DELIVERY_FEE };
+  }
+
+  return calculateDeliveryCharge(destinationPincode, totalWeightGrams);
+}
 
 /**
  * Calls Delhivery's Invoice Charges (rate calculator) API to estimate the

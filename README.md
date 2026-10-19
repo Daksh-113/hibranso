@@ -186,15 +186,25 @@ configure your own SMTP provider in the same settings page).
 
 ---
 
-## 6b. Delhivery delivery-charge calculation
+## 6b. Delhivery delivery-charge calculation (or a flat fee)
 
 Delivery charges are calculated live at checkout from your Delhivery
 account's rate calculator, using the customer's destination pincode and the
 shipment's total weight (each product has a `weight_grams` field in the
 admin form, defaulting to 300g).
 
+**If you haven't activated a Delhivery business account yet** (or don't
+want to), you don't need one to launch — leave `DELHIVERY_API_TOKEN` and
+`DELHIVERY_ORIGIN_PINCODE` unset, and every order gets a flat delivery fee
+instead (`FLAT_DELIVERY_FEE`, defaults to ₹149 if not set). The moment you
+add both Delhivery variables later, live rate calculation takes over
+automatically — nothing else to change.
+
+To use live Delhivery rates instead:
+
 1. In your Delhivery business account, find your **API token** (Delhivery
-   dashboard → API / Integration settings).
+   dashboard → API / Integration settings) — this requires your account to
+   be activated (business details, pickup address, bank details) first.
 2. Set `DELHIVERY_API_TOKEN` to that token, and `DELHIVERY_ORIGIN_PINCODE`
    to the pincode you ship from.
 

@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { calculateDeliveryCharge } from "@/lib/delhivery";
+import { resolveDeliveryCharge } from "@/lib/delhivery";
 import { createPhonePePayment } from "@/lib/phonepe";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
@@ -33,7 +33,7 @@ export async function getDeliveryRateAction(pincode: string): Promise<DeliveryRa
 
   if (totalWeight === 0) return { error: "Your cart is empty.", charge: null };
 
-  const result = await calculateDeliveryCharge(pincode, totalWeight);
+  const result = await resolveDeliveryCharge(pincode, totalWeight);
   if (!result.ok) return { error: result.error, charge: null };
   return { error: null, charge: result.charge };
 }
@@ -91,7 +91,7 @@ export async function initiateCheckoutAction(
   const subtotal = sellable.reduce((sum, item) => sum + item.product!.selling_price * item.quantity, 0);
   const totalWeight = sellable.reduce((sum, item) => sum + item.product!.weight_grams * item.quantity, 0);
 
-  const rate = await calculateDeliveryCharge(pincode, totalWeight);
+  const rate = await resolveDeliveryCharge(pincode, totalWeight);
   const deliveryCharge = rate.ok ? rate.charge : 0;
   const totalAmount = subtotal + deliveryCharge;
 
