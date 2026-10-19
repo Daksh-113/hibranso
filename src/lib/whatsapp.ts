@@ -6,8 +6,10 @@ export function getWhatsAppNumber(): string {
   return (process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? "").replace(/[^\d]/g, "");
 }
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "";
+
 export function buildProductWhatsAppMessage(
-  product: Pick<Product, "name" | "mrp" | "selling_price">,
+  product: Pick<Product, "name" | "mrp" | "selling_price" | "slug">,
   options?: { size?: string | null; color?: string | null; customerName?: string | null }
 ): string {
   const lines = [
@@ -17,6 +19,7 @@ export function buildProductWhatsAppMessage(
     `MRP: ${formatPrice(product.mrp)}`,
   ];
 
+  if (siteUrl) lines.push(`Link: ${siteUrl}/product/${product.slug}`);
   if (options?.size) lines.push(`Size: ${options.size}`);
   if (options?.color) lines.push(`Colour: ${options.color}`);
   if (options?.customerName) lines.push(`Name: ${options.customerName}`);
@@ -31,7 +34,7 @@ export function buildWhatsAppLink(message: string): string {
 }
 
 export function buildProductWhatsAppLink(
-  product: Pick<Product, "name" | "mrp" | "selling_price">,
+  product: Pick<Product, "name" | "mrp" | "selling_price" | "slug">,
   options?: { size?: string | null; color?: string | null; customerName?: string | null }
 ): string {
   return buildWhatsAppLink(buildProductWhatsAppMessage(product, options));

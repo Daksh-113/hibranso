@@ -12,7 +12,7 @@ export function ProductPurchasePanel({
   colors,
   customerName = null,
 }: {
-  product: { name: string; mrp: number; selling_price: number; is_available: boolean };
+  product: { name: string; slug: string; mrp: number; selling_price: number; is_available: boolean };
   sizes: ProductSize[];
   colors: ProductColor[];
   customerName?: string | null;
