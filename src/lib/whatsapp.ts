@@ -1,5 +1,5 @@
 import { formatPrice } from "./format";
-import type { Product } from "./types";
+import type { Order, OrderItem, Product } from "./types";
 
 /** Digits-only WhatsApp number (with country code), configured per deployment. */
 export function getWhatsAppNumber(): string {
@@ -42,4 +42,33 @@ export function buildProductWhatsAppLink(
 
 export function buildGeneralWhatsAppLink(message = "Hi Hibranso, I have a question about your products."): string {
   return buildWhatsAppLink(message);
+}
+
+export function buildOrderWhatsAppMessage(order: Order, items: OrderItem[]): string {
+  const lines = [
+    "Hi Hibranso, I've just paid for an order on your website:",
+    `Order ID: ${order.merchant_order_id}`,
+    "",
+    "Items:",
+    ...items.map((item) => {
+      const variant = [item.size, item.color].filter(Boolean).join(" / ");
+      return `- ${item.product_name}${variant ? ` (${variant})` : ""} x${item.quantity} — ${formatPrice(item.line_total)}`;
+    }),
+    "",
+    `Subtotal: ${formatPrice(order.subtotal)}`,
+    `Delivery: ${formatPrice(order.delivery_charge)}`,
+    `Total paid: ${formatPrice(order.total_amount)}`,
+    "",
+    "Delivery address:",
+    order.delivery_name,
+    order.delivery_phone,
+    [order.delivery_address_line1, order.delivery_address_line2].filter(Boolean).join(", "),
+    `${order.delivery_city}, ${order.delivery_state} - ${order.delivery_pincode}`,
+  ];
+
+  return lines.join("\n");
+}
+
+export function buildOrderWhatsAppLink(order: Order, items: OrderItem[]): string {
+  return buildWhatsAppLink(buildOrderWhatsAppMessage(order, items));
 }

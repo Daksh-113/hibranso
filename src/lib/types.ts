@@ -50,6 +50,7 @@ export type Product = {
   is_featured: boolean;
   is_bestseller: boolean;
   stock_quantity: number | null;
+  weight_grams: number;
   created_at: string;
   updated_at: string;
   category?: Category | null;
@@ -64,6 +65,60 @@ export type CustomerProfile = {
   phone: string | null;
   created_at: string;
   updated_at: string;
+};
+
+export type CartItem = {
+  id: string;
+  user_id: string;
+  product_id: string;
+  size: string | null;
+  color: string | null;
+  quantity: number;
+  created_at: string;
+  updated_at: string;
+  product?: Product;
+};
+
+export type OrderStatus = "created" | "paid" | "failed" | "shipped" | "delivered" | "cancelled";
+export type PaymentStatus = "pending" | "completed" | "failed";
+
+export type Order = {
+  id: string;
+  user_id: string;
+  status: OrderStatus;
+  subtotal: number;
+  delivery_charge: number;
+  total_amount: number;
+  delivery_name: string;
+  delivery_phone: string;
+  delivery_address_line1: string;
+  delivery_address_line2: string | null;
+  delivery_city: string;
+  delivery_state: string;
+  delivery_pincode: string;
+  payment_provider: string;
+  merchant_order_id: string;
+  phonepe_transaction_id: string | null;
+  payment_status: PaymentStatus;
+  stock_issue: boolean;
+  admin_notes: string | null;
+  created_at: string;
+  updated_at: string;
+  order_items?: OrderItem[];
+};
+
+export type OrderItem = {
+  id: string;
+  order_id: string;
+  product_id: string | null;
+  product_name: string;
+  size: string | null;
+  color: string | null;
+  quantity: number;
+  unit_price: number;
+  line_total: number;
+  stock_fulfilled: boolean;
+  created_at: string;
 };
 
 export type ProductSortOption =

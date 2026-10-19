@@ -17,10 +17,12 @@ export function MobileNav({
   categories,
   accountHref,
   wishlistCount,
+  cartCount,
 }: {
   categories: CategoryWithChildren[];
   accountHref: string;
   wishlistCount: number;
+  cartCount: number;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -104,6 +106,9 @@ export function MobileNav({
           )}
 
           <div className="mt-4 flex items-center gap-6 border-t border-line pt-8">
+            <Link href="/cart" onClick={() => setOpen(false)} className="text-sm uppercase tracking-wide text-charcoal/80">
+              Cart{cartCount > 0 ? ` (${cartCount})` : ""}
+            </Link>
             <Link href={accountHref} onClick={() => setOpen(false)} className="text-sm uppercase tracking-wide text-charcoal/80">
               Wishlist{wishlistCount > 0 ? ` (${wishlistCount})` : ""}
             </Link>

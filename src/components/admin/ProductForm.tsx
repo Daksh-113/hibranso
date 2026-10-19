@@ -143,6 +143,15 @@ export function ProductForm({
               className="w-full border border-line bg-ivory px-4 py-2.5 text-sm outline-none focus:border-gold"
             />
           </Field>
+          <Field label="Weight (grams)" hint="Used to calculate delivery charges. Defaults to 300g.">
+            <input
+              name="weight_grams"
+              type="number"
+              min={1}
+              defaultValue={product?.weight_grams ?? 300}
+              className="w-full border border-line bg-ivory px-4 py-2.5 text-sm outline-none focus:border-gold"
+            />
+          </Field>
         </div>
 
         <div className="flex flex-wrap gap-6 pt-2">

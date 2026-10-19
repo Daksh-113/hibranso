@@ -55,6 +55,8 @@ export async function saveProductAction(
   const sku = String(formData.get("sku") ?? "").trim() || null;
   const stockQuantityRaw = String(formData.get("stock_quantity") ?? "").trim();
   const stockQuantity = stockQuantityRaw ? Number(stockQuantityRaw) : null;
+  const weightGramsRaw = String(formData.get("weight_grams") ?? "").trim();
+  const weightGrams = weightGramsRaw ? Number(weightGramsRaw) : 300;
   const isAvailable = formData.get("is_available") === "on";
   const isFeatured = formData.get("is_featured") === "on";
   const isBestseller = formData.get("is_bestseller") === "on";
@@ -76,6 +78,7 @@ export async function saveProductAction(
     selling_price: sellingPrice,
     sku,
     stock_quantity: stockQuantity,
+    weight_grams: Number.isNaN(weightGrams) || weightGrams <= 0 ? 300 : weightGrams,
     is_available: isAvailable,
     is_featured: isFeatured,
     is_bestseller: isBestseller,

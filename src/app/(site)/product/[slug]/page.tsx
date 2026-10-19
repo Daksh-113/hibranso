@@ -153,6 +153,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
               sizes={product.product_sizes ?? []}
               colors={product.product_colors ?? []}
               customerName={customer?.profile?.name ?? null}
+              isLoggedIn={isLoggedIn}
             />
           </div>
         </div>
