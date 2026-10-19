@@ -1,19 +1,13 @@
 import Link from "next/link";
 import { getCategoryTree } from "@/lib/products";
 import { getCurrentCustomer, getWishlistProductIds } from "@/lib/customer";
-import { getCartCount } from "@/lib/cart";
 import { Logo } from "./Logo";
 import { MobileNav } from "./MobileNav";
 import { Container } from "@/components/ui/Container";
 
 export async function Header() {
   const [categories, customer] = await Promise.all([getCategoryTree(), getCurrentCustomer()]);
-  const [wishlistCount, cartCount] = customer
-    ? await Promise.all([
-        getWishlistProductIds(customer.id).then((ids) => ids.size),
-        getCartCount(customer.id),
-      ])
-    : [0, 0];
+  const wishlistCount = customer ? (await getWishlistProductIds(customer.id)).size : 0;
   const accountHref = customer ? "/account" : "/account/login";
 
   return (
@@ -97,21 +91,12 @@ export async function Header() {
           <Link href={accountHref} aria-label="Account" className="text-charcoal transition-colors hover:text-gold">
             <UserIcon />
           </Link>
-          <Link href="/cart" aria-label="Cart" className="relative text-charcoal transition-colors hover:text-gold">
-            <CartIcon />
-            {cartCount > 0 && (
-              <span className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-gold text-[10px] font-semibold text-ivory">
-                {cartCount}
-              </span>
-            )}
-          </Link>
         </div>
 
         <MobileNav
           categories={categories}
           accountHref={accountHref}
           wishlistCount={wishlistCount}
-          cartCount={cartCount}
         />
       </Container>
     </header>
@@ -144,16 +129,6 @@ function UserIcon() {
     <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={1.6}>
       <circle cx="12" cy="8" r="3.5" />
       <path strokeLinecap="round" d="M4.5 20c1.4-3.5 4.4-5.5 7.5-5.5s6.1 2 7.5 5.5" />
-    </svg>
-  );
-}
-
-function CartIcon() {
-  return (
-    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={1.6}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M3 4h2l2.4 12.4a2 2 0 0 0 2 1.6h7.6a2 2 0 0 0 2-1.6L21 8H6" />
-      <circle cx="9.5" cy="20" r="1.3" fill="currentColor" stroke="none" />
-      <circle cx="17.5" cy="20" r="1.3" fill="currentColor" stroke="none" />
     </svg>
   );
 }

@@ -1,13 +1,20 @@
 # Hibranso
 
 A premium product-catalogue website for **Hibranso** — bags, clothing and
-lifestyle accessories. Customers browse the catalogue and either message
-Hibranso directly on WhatsApp, or add items to a cart and pay online via UPI
-(through PhonePe) with a live, weight/location-based delivery charge
-(through Delhivery).
+lifestyle accessories. Customers browse the catalogue and message Hibranso
+directly on WhatsApp to buy.
 
 Built with Next.js (App Router), TypeScript, Tailwind CSS v4 and Supabase
 (Postgres, Auth, Storage).
+
+> **Online payment is currently disabled.** This codebase also contains a
+> complete cart + UPI checkout (PhonePe) + live delivery pricing (Delhivery)
+> + automatic stock management system — fully built, but switched off at
+> the UI level (`/cart` and `/checkout` redirect to `/shop`) because PhonePe
+> Payment Gateway access needs a separate business approval that hasn't
+> gone through yet. Nothing was deleted: once that approval comes through,
+> turning it back on just means restoring the "Add to Cart" button and cart
+> icon and un-redirecting those two pages — see the bottom of section 6c.
 
 > **Demo data notice.** The seed data in `supabase/seed.sql` creates six
 > products whose names are all prefixed `[DEMO]`. These are placeholders to
@@ -223,11 +230,18 @@ endpoint, but you should treat your first real checkout as the actual test:
 
 ---
 
-## 6c. PhonePe UPI payment setup
+## 6c. PhonePe UPI payment setup (currently disabled — see below to re-enable)
 
 Online payments are collected via **PhonePe's Standard Checkout (v2)**
 integration — the customer is redirected to a PhonePe-hosted page to pay by
-UPI, then redirected back to your site.
+UPI, then redirected back to your site. **This is built and ready, but the
+customer-facing entry points are currently switched off** (see "Turning
+this back on" at the end of this section) because PhonePe's Payment
+Gateway product needs a separate business approval from a plain PhonePe
+Business account — if you can't find "Developer Settings" / "API keys" in
+your dashboard, that's usually why; you may need to apply for Payment
+Gateway access specifically (often via PhonePe sales/support) before these
+credentials become available.
 
 1. Log into the [PhonePe Business Dashboard](https://business.phonepe.com)
    and open **Developer Settings** (or **API keys**) under Payment Gateway.
@@ -263,6 +277,24 @@ shifted across API generations and merchant plans. Before relying on it:
   `src/lib/orders.ts` always re-checks payment status directly with PhonePe
   before marking an order paid or touching stock, precisely because a
   redirect can be spoofed.
+
+### Turning this back on
+
+The whole cart/checkout/payment/stock-automation backend is intact and
+untouched — only three small UI changes turned it off, and reversing them
+switches it back on:
+
+1. `src/app/(site)/cart/page.tsx` and `src/app/(site)/checkout/page.tsx`
+   (and `checkout/return/page.tsx`) were replaced with a one-line
+   `redirect("/shop")`. Restore each one's real page content (check this
+   repo's git history for the versions before that change).
+2. `src/components/product/ProductPurchasePanel.tsx` had its "Add to Cart"
+   button, quantity selector, and `addToCartAction` call removed. Restore
+   those (same git history).
+3. `src/components/site/Header.tsx` and `MobileNav.tsx` had the cart icon/
+   link and `cartCount` removed. Restore those too.
+
+Nothing in the database, `lib/`, or `/admin/orders` needs to change.
 
 ---
 
@@ -394,14 +426,11 @@ public/demo/              Placeholder SVG images used only by the demo products
 
 ---
 
-## 11. How WhatsApp ordering & checkout work
+## 11. How WhatsApp ordering works (and the checkout system that's built but off)
 
-There are two ways a customer can buy, side by side:
-
-**1. Buy on WhatsApp (no account needed)** — `NEXT_PUBLIC_WHATSAPP_NUMBER`
-is read once in `src/lib/whatsapp.ts` and used everywhere a WhatsApp link
-is built — it is never hard-coded elsewhere in the app. Every "Buy on
-WhatsApp" button opens:
+`NEXT_PUBLIC_WHATSAPP_NUMBER` is read once in `src/lib/whatsapp.ts` and used
+everywhere a WhatsApp link is built — it is never hard-coded elsewhere in
+the app. Every "Buy on WhatsApp" button opens:
 
 ```
 https://wa.me/<number>?text=<url-encoded message>
@@ -420,8 +449,9 @@ Colour: [SELECTED COLOUR]  (only if the product has colours)
 Name: [CUSTOMER NAME]      (only if signed in with a saved name)
 ```
 
-**2. Cart + online payment (UPI, signed in)** — add to cart from the
-product page, check out with a delivery address, pay via PhonePe. On
+This is the only way customers can buy right now. There's also a complete
+**cart + online payment (UPI, signed in)** system built — add to cart from
+the product page, check out with a delivery address, pay via PhonePe. On
 confirmed payment: stock is decremented (auto sold-out at zero), the order
 appears in `/admin/orders`, and the customer's confirmation page offers a
 one-tap **"Notify us on WhatsApp"** button with a message summarising the
